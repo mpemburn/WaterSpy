@@ -1,12 +1,10 @@
 # web_server.py
 
-import network
 import socket
 import wifi
 import time
 import file_loader
 import read_sensor
-import waterer
 
 wlan = wifi.get_connection()
 
