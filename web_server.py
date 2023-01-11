@@ -1,11 +1,12 @@
+# web_server.py
+
 import network
 import socket
 import wifi
 import time
 import file_loader
 import read_sensor
-
-from machine import Pin
+import waterer
 
 wlan = wifi.get_connection()
 
@@ -13,7 +14,7 @@ css = file_loader.get('style.css')
 
 script = file_loader.get('script.js')
 
-head = """<!DOCTYPE html>
+html = """<!DOCTYPE html>
 <html>
     <head>
         {0}
@@ -22,21 +23,20 @@ head = """<!DOCTYPE html>
         <title>Water Spy</title>
     </head>
     <body>
-        <div style="width: 50%; margin-top: text-align: center;">
+        <div style="width: 50%; margin-top: text-align: center; block-size: fit-content;">
             <h1>Water Level</h1>
             <p id="output"></p>
+            <div id="image">
+            </div>
             <div class="cylinder">
                 <div class="water"></div>
-            </div
-        <div>
-            """
-tail = """
             </div>
+
         </div>
     </body>
 </html>
 """
-html = head.format(css, script) + tail
+html = html.format(css, script)
 
 max_wait = 10
 while max_wait > 0:
@@ -64,24 +64,27 @@ print('listening on', addr)
 # Listen for connections
 while True:
     try:
-        cl, addr = s.accept()
+        client, addr = s.accept()
         # print('client connected from', addr)
-        request = cl.recv(1024)
+        request = client.recv(1024)
         # print(request)
 
         request = str(request)
+        image = request.find('/get_image')
         sensor = request.find('/get_sensor')
 
-        if sensor == 6:
+        if image == 6:
+            response = str(file_loader.get('waterer.svg'))
+        elif sensor == 6:
             response = str(read_sensor.read())
-
         else:
             response = html
 
-        cl.send('HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n')
-        cl.send(response)
-        cl.close()
+        client.send('HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n')
+        client.send(response)
+        client.close()
 
     except OSError as e:
-        cl.close()
+        client.close()
         print('connection closed')
+
